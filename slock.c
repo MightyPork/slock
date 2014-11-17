@@ -34,7 +34,9 @@ static Lock **locks;
 static int nscreens;
 static Bool running = True;
 
+// cached args
 static char* user_color2 = NULL;
+static Bool want_dpms = False;
 
 static void
 die(const char *errstr, ...) {
@@ -108,12 +110,19 @@ static void go_dark(Display *dpy)
 	}
 
 	is_dark = True;
+
+	if(want_dpms)
+		system("xset dpms force off");
+
 }
 
 
 static void go_light(Display *dpy)
 {
 	if(!is_dark) return;
+
+	if(want_dpms)
+		system("xset dpms force on");
 
 	for(int screen = 0; screen < nscreens; screen++) {
 		XSetWindowBackground(dpy, locks[screen]->win, locks[screen]->colors[1]);
@@ -202,7 +211,7 @@ readpw(Display *dpy, const char *pws)
 				go_light(dpy);
 			} else if(llen != 0 && len == 0) {
 				// go dark
-				go_dark(dpy);
+				if(running) go_dark(dpy);
 			}
 			llen = len;
 		}
@@ -221,6 +230,8 @@ unlockscreen(Display *dpy, Lock *lock) {
 	XFreePixmap(dpy, lock->pmap);
 	XDestroyWindow(dpy, lock->win);
 
+	//system("xset dpms force on");
+
 	free(lock);
 }
 
@@ -230,8 +241,8 @@ lockscreen(Display *dpy, int screen) {
 	unsigned int len;
 	Lock *lock;
 	XColor color, dummy;
-	XSetWindowAttributes wa;
 	Cursor invisible;
+	XSetWindowAttributes wa;
 
 	if(dpy == NULL || screen < 0)
 		return NULL;
@@ -295,9 +306,13 @@ lockscreen(Display *dpy, int screen) {
 }
 
 static void
-usage(void) {
-	fprintf(stderr, "usage: slock [-v] [-c color]\n");
-	exit(EXIT_FAILURE);
+usage(FILE* stream) {
+	fprintf(stream, "usage: slock [-v] [-h] [-c color] [-d]\n-v ... version\n-h ... help\n-c ... active background color(eg. \"#FF0000\" or red)\n-d ... use dpms (turn screen off)\n");
+}
+
+static void
+version(FILE* stream) {
+	fprintf(stream, "slock-%s\n\n(c) 2006-2012 Anselm R Garbe <anselm@garbe.us>\n    2014 Ondrej Hruska <ondra@ondrovo.com>\n", VERSION);
 }
 
 int
@@ -308,12 +323,42 @@ main(int argc, char **argv) {
 	Display *dpy;
 	int screen;
 
-	if((argc == 2) && !strcmp("-v", argv[1]))
-		die("\nslock-%s\n\n© 2006-2012 Anselm R Garbe\n\nContributed:\n\t2014 Ondrej Hruska <ondra@ondrovo.com>\n\n", VERSION);
-	else if((argc == 3) && !strcmp("-c", argv[1]))
-		user_color2 = argv[2];
-	else if(argc != 1)
-		usage();
+	// parse args
+	int c;
+	opterr = 0;
+	while ((c = getopt(argc, argv, "vhdc:")) != -1)
+	{
+		switch (c)
+		{
+
+			case 'c':
+				// set color
+				user_color2 = optarg;
+				break;
+
+			case 'd':
+				// use dpms
+				want_dpms = True;
+				break;
+
+			case 'v':
+				// version
+				version(stdout);
+				return 0;
+
+			case 'h':
+				// want help
+				usage(stdout);
+				return 0;
+
+			case '?':
+			default:
+				// fail
+				usage(stderr);
+				return 1;
+		}
+	}
+
 
 #ifdef __linux__
 	dontkillme();
@@ -347,6 +392,9 @@ main(int argc, char **argv) {
 		return 1;
 	}
 
+	if(want_dpms)
+		system("xset dpms force off");
+
 	/* Everything is now blank. Now wait for the correct password. */
 #ifdef HAVE_BSD_AUTH
 	readpw(dpy);
@@ -360,6 +408,9 @@ main(int argc, char **argv) {
 
 	free(locks);
 	XCloseDisplay(dpy);
+
+	if(want_dpms)
+		system("xset dpms force on");
 
 	return 0;
 }
