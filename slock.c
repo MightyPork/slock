@@ -59,7 +59,7 @@ dontkillme(void) {
 	if (fd < 0 && errno == ENOENT)
 		return;
 	if (fd < 0 || write(fd, "-1000\n", 6) != 6 || close(fd) != 0)
-		die("cannot disable the out-of-memory killer for this process\n");
+		die("Cannot disable the out-of-memory killer for this process.\nCheck if the slock file has SUID and is root-owned.\n");
 }
 #endif
 
