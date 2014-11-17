@@ -3,7 +3,7 @@
 
 pkgname=slock-xtra-git
 _pkgname=slock
-pkgver=20121025.3092d3b
+pkgver=20141117.191388c
 pkgrel=1
 pkgdesc='Simple X display locker, with adjustable color and more intuitive behavior.'
 url='https://github.com/MightyPork/slock'
