@@ -30,3 +30,5 @@ Improvements in this fork
 - You can press space or return to activate the password entering mode (show color), without adding this keystroke to the password buffer
 - You can press ESC or RETURN to abort the password entering, even if nothing is entered yet
 - You can set custom color using the `-c color` flag: You can use CSS-style hexcode `"#FF00FF"`, or a color name (`green`).
+- You can specify "auto-unlock" option to not require return at the end of password
+- You can use DPMS (turn screen off)

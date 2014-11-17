@@ -37,6 +37,7 @@ static Bool running = True;
 // cached args
 static char* user_color2 = NULL;
 static Bool want_dpms = False;
+static Bool want_autounlock = False;
 
 static void
 die(const char *errstr, ...) {
@@ -203,6 +204,19 @@ readpw(Display *dpy, const char *pws)
 				if(num && !iscntrl((int) buf[0]) && (len + num < sizeof passwd)) {
 					memcpy(passwd + len, buf, num);
 					len += num;
+
+					// auto check and immediately unlock if OK
+					if(want_autounlock) {
+						passwd[len] = 0;
+#ifdef HAVE_BSD_AUTH
+						running = !auth_userokay(getlogin(), NULL, "auth-xlock", passwd);
+#else
+						running = !!strcmp(crypt(passwd, pws), pws);
+#endif
+						if(!running) usleep(250000);
+					}
+
+
 				}
 				break;
 			}
@@ -307,7 +321,7 @@ lockscreen(Display *dpy, int screen) {
 
 static void
 usage(FILE* stream) {
-	fprintf(stream, "usage: slock [-v] [-h] [-c color] [-d]\n-v ... version\n-h ... help\n-c ... active background color(eg. \"#FF0000\" or red)\n-d ... use dpms (turn screen off)\n");
+	fprintf(stream, "usage: slock [-v] [-h] [-c color] [-d] [-a]\n-v ... version\n-h ... help\n-c ... active background color(eg. \"#FF0000\" or red)\n-d ... use dpms (turn screen off)\n-a ... auto unlock (no need to confirm with <return>)\n");
 }
 
 static void
@@ -324,9 +338,9 @@ main(int argc, char **argv) {
 	int screen;
 
 	// parse args
-	int c;
+	int c, index;
 	opterr = 0;
-	while ((c = getopt(argc, argv, "vhdc:")) != -1)
+	while ((c = getopt(argc, argv, "avhdc:")) != -1)
 	{
 		switch (c)
 		{
@@ -341,6 +355,11 @@ main(int argc, char **argv) {
 				want_dpms = True;
 				break;
 
+			case 'a':
+				// auto unlock
+				want_autounlock = True;
+				break;
+
 			case 'v':
 				// version
 				version(stdout);
@@ -352,11 +371,20 @@ main(int argc, char **argv) {
 				return 0;
 
 			case '?':
+				fprintf(stderr, "Bad arguments.\n");
 			default:
 				// fail
 				usage(stderr);
 				return 1;
 		}
+	}
+
+	if(optind < argc) {
+		for(index = optind; index < argc; index++) {
+	    	fprintf(stderr, "Bad argument: %s\n", argv[index]);
+		}
+		usage(stderr);
+		return 1;
 	}
 
 
