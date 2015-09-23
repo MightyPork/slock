@@ -331,7 +331,7 @@ usage(FILE* stream) {
 
 static void
 version(FILE* stream) {
-	fprintf(stream, "slock-%s\n\n(c) 2006-2012 Anselm R Garbe <anselm@garbe.us>\n    2014 Ondrej Hruska <ondra@ondrovo.com>\n", VERSION);
+	fprintf(stream, "slock-%s\n\n(c) 2006-2012 Anselm R Garbe <anselm@garbe.us>\n    2014-2015 Ondrej Hruska <ondra@ondrovo.com>\n    and others - full list at: https://github.com/MightyPork/slock\n", VERSION);
 }
 
 int
