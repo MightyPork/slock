@@ -276,6 +276,11 @@ lockscreen(Display *dpy, int screen) {
 			0, DefaultDepth(dpy, lock->screen), CopyFromParent,
 			DefaultVisual(dpy, lock->screen), CWOverrideRedirect | CWBackPixel, &wa);
 
+	// sets WM_NAME to "slock"
+	char *window_name = "slock";
+	XTextProperty wmName;
+	XStringListToTextProperty(&window_name, 1, &wmName);
+	XSetWMName(dpy, lock->win, &wmName);
 
 	// active color
 
