@@ -386,7 +386,7 @@ main(int argc, char **argv) {
 
 	if(optind < argc) {
 		for(index = optind; index < argc; index++) {
-	    	fprintf(stderr, "Bad argument: %s\n", argv[index]);
+			fprintf(stderr, "Bad argument: %s\n", argv[index]);
 		}
 		usage(stderr);
 		return 1;
